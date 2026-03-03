@@ -19,6 +19,9 @@ ColumnLayout {
   property color valueMediumPriorityColor: (pluginApi?.pluginSettings?.priorityColors?.medium) || (pluginApi?.manifest?.metadata?.defaultSettings?.priorityColors?.medium) || Color.mPrimary.toString()
   property color valueLowPriorityColor: (pluginApi?.pluginSettings?.priorityColors?.low) || (pluginApi?.manifest?.metadata?.defaultSettings?.priorityColors?.low) || Color.mOnSurfaceVariant.toString()
 
+  // Export path property
+  property string valueExportPath: pluginApi?.pluginSettings?.exportPath || pluginApi?.manifest?.metadata?.defaultSettings?.exportPath
+
   // Reference to Main.qml instance for centralized data management
   readonly property var mainInstance: pluginApi?.mainInstance
 
@@ -124,6 +127,34 @@ ColumnLayout {
         onColorSelected: function (color) {
           root.valueLowPriorityColor = color;
         }
+      }
+    }
+  }
+
+  // Export path setting
+  NTextInputButton {
+    Layout.fillWidth: true
+    label: pluginApi.tr("settings.export_path.label")
+    description: pluginApi.tr("settings.export_path.description")
+    placeholderText: pluginApi.tr("settings.export_path.placeholder")
+    text: root.valueExportPath
+    buttonIcon: "folder-open"
+    buttonTooltip: pluginApi.tr("settings.export_path.select_folder")
+    onInputEditingFinished: root.valueExportPath = text
+    onButtonClicked: folderPicker.openFilePicker()
+  }
+
+  // Folder picker for selecting export path
+  NFilePicker {
+    id: folderPicker
+    selectionMode: "folders"
+    title: pluginApi.tr("settings.export_path.label")
+    initialPath: root.valueExportPath
+    onAccepted: function (paths) {
+      if (paths.length > 0) {
+        root.valueExportPath = paths[0];
+        mainInstance.pluginApi.pluginSettings.exportPath = paths[0];
+        mainInstance.pluginApi.saveSettings();
       }
     }
   }

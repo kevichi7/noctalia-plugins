@@ -8,14 +8,16 @@ Item {
   property var pluginApi: null
   property var rawTodos: []
   property var rawPages: []
+  property string currentExportPath: ""
 
   // Process for exporting todos
   Process {
     id: exportProcess
     running: false
-    onExited: function(code) {
+    onExited: function (code) {
       if (code === 0) {
-        ToastService.showNotice(pluginApi.tr("main.exported_todos"));
+        var displayPath = currentExportPath.replace(Quickshell.env("HOME"), "~");
+        ToastService.showNotice(pluginApi.tr("main.exported_todos") + displayPath);
       } else {
         ToastService.showError(pluginApi.tr("main.export_failed"));
       }
@@ -51,6 +53,10 @@ Item {
         pluginApi.pluginSettings.isExpanded = false;
       if (pluginApi.pluginSettings.useCustomColors === undefined)
         pluginApi.pluginSettings.useCustomColors = false;
+
+      // Initialize export path
+      if (!pluginApi.pluginSettings.exportPath)
+        pluginApi.pluginSettings.exportPath = "~/Documents";
 
       // Initialize priority colors
       if (!pluginApi.pluginSettings.priorityColors) {
@@ -157,7 +163,7 @@ Item {
     }
 
     function addTodoDefault(text: string) {
-      addTodo(text, "medium", pluginApi?.pluginSettings?.current_page_id || 0);
+      addTodo(text, "medium", pluginApi.pluginSettings.current_page_id);
     }
 
     // Todo Update Operations
@@ -568,12 +574,23 @@ Item {
   function exportTodosToFile(markdownContent) {
     try {
       var timestamp = new Date().toISOString().split("T")[0];
-      var fileName = "todo_" + timestamp + ".md";
-      var filePath = Quickshell.env("HOME") + "/Documents/" + fileName;
+      var timeSuffix = new Date().toISOString().replace(/[:.]/g, "-").split("T")[1];
+      var fileName = "todo_" + timestamp + "_" + timeSuffix + ".md";
 
-      // Use base64 encoding to safely pass content through shell
+      // Get export path from settings, default to ~/Documents
+      var exportPath = pluginApi.pluginSettings.exportPath;
+      exportPath = exportPath.replace("~", Quickshell.env("HOME"));
+
+      // Ensure path ends without slash
+      if (exportPath.endsWith("/")) {
+        exportPath = exportPath.slice(0, -1);
+      }
+
+      var filePath = exportPath + "/" + fileName;
+
+      // Write file
       var base64 = Qt.btoa(markdownContent);
-
+      currentExportPath = filePath;
       exportProcess.command = ["sh", "-c", `echo "${base64}" | base64 -d > "${filePath}"`];
       exportProcess.running = true;
     } catch (e) {
@@ -608,9 +625,15 @@ Item {
       lines.push("");
 
       // Get todos for this page
-      var pageTodos = rawTodos.filter(function(t) { return t.pageId === pageId; });
-      var activeTodos = pageTodos.filter(function(t) { return !t.completed; });
-      var completedTodos = pageTodos.filter(function(t) { return t.completed; });
+      var pageTodos = rawTodos.filter(function (t) {
+        return t.pageId === pageId;
+      });
+      var activeTodos = pageTodos.filter(function (t) {
+        return !t.completed;
+      });
+      var completedTodos = pageTodos.filter(function (t) {
+        return t.completed;
+      });
 
       // Render active todos (always show section, even if empty)
       var activeSection = pluginApi.tr("main.export_active_section").replace("{count}", activeTodos.length);
@@ -638,7 +661,7 @@ Item {
 
     for (var i = 0; i < todos.length; i++) {
       var todo = todos[i];
-      var priorityLabel = getPriorityLabel(todo.priority || "medium");
+      var priorityLabel = getPriorityLabel(todo.priority);
 
       lines.push(itemPrefix + checkbox + " " + todo.text);
       lines.push(subItemPrefix + pluginApi.tr("main.export_priority") + ": " + priorityLabel);
@@ -664,14 +687,14 @@ Item {
   // Get priority label (text only)
   function getPriorityLabel(priority) {
     switch (priority) {
-      case "high":
-        return pluginApi.tr("main.priority_high");
-      case "medium":
-        return pluginApi.tr("main.priority_medium");
-      case "low":
-        return pluginApi.tr("main.priority_low");
-      default:
-        return pluginApi.tr("main.priority_medium");
+    case "high":
+      return pluginApi.tr("main.priority_high");
+    case "medium":
+      return pluginApi.tr("main.priority_medium");
+    case "low":
+      return pluginApi.tr("main.priority_low");
+    default:
+      return pluginApi.tr("main.priority_medium");
     }
   }
 }
