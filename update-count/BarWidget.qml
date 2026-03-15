@@ -6,7 +6,6 @@ import qs.Commons
 import qs.Widgets
 import qs.Services.UI
 
-
 Item {
   id: root
 
