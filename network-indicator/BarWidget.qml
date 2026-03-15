@@ -7,7 +7,7 @@ import qs.Widgets
 import qs.Services.UI
 import qs.Services.System
 
-NIconButton {
+Item {
     id: root
 
     property var pluginApi: null
@@ -45,10 +45,6 @@ NIconButton {
 
     readonly property real contentWidth: barIsVertical ? Style.capsuleHeight : Math.max(contentRow.implicitWidth, minWidth)
     readonly property real contentHeight: barIsVertical ? Math.round(contentRow.implicitHeight + Style.marginM * 2) : Style.capsuleHeight
-
-    baseSize: -1.0
-    tooltipText: mainInstance?.buildTooltip()
-    tooltipDirection: BarService.getTooltipDirection()
 
     implicitWidth: contentWidth
     implicitHeight: contentHeight
@@ -115,35 +111,35 @@ NIconButton {
 
     // ---------- Interaction ----------
 
-    onRightClicked: {
-        var popupMenuWindow = PanelService.getPopupMenuWindow(screen);
-        if (popupMenuWindow) {
-            popupMenuWindow.showContextMenu(contextMenu);
-            contextMenu.openAtItem(root, screen);
-        }
-    }
+    MouseArea {
+      anchors.fill: parent
+      acceptedButtons: Qt.RightButton
 
-    NPopupContextMenu {
+      onPressed: mouse => {
+        if (mouse.button == Qt.RightButton)
+          PanelService.showContextMenu(contextMenu, root, screen);
+      }
+
+      NPopupContextMenu {
         id: contextMenu
 
         model: [
-            {
-                "label": I18n.tr("actions.widget-settings"),
-                "action": "widget-settings",
-                "icon": "settings"
-            },
+          {
+            "label": I18n.tr("actions.widget-settings"),
+            "action": "widget-settings",
+            "icon": "settings"
+          },
         ]
 
         onTriggered: action => {
-            var popupMenuWindow = PanelService.getPopupMenuWindow(screen);
-            if (popupMenuWindow) {
-                popupMenuWindow.close();
-            }
+          contextMenu.close();
+          PanelService.closeContextMenu(screen);
 
-            if (action === "widget-settings") {
-                BarService.openPluginSettings(screen, pluginApi.manifest);
-            }
+          if (action === "widget-settings") {
+            BarService.openPluginSettings(screen, pluginApi.manifest);
+          }
         }
+      }
     }
 
     // ---------- Utilities ----------
