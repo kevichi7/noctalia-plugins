@@ -17,7 +17,7 @@
   },
   "metadata": {
     "defaultSettings": {
-      "cache_dir": "~/.cache/quickshell/thumbnails",
+      "animation_duration": 750,
       "cards_shown": 11,
       "card_height": 500,
       "card_spacing": 8,
@@ -25,10 +25,11 @@
       "card_radius": 10,
       "filter_images": ["png", "jpg", "jpeg"],
       "filter_videos": ["mp4", "mkv", "avi", "mov"],
+      "live_preview": false,
+      "selected_filter": "images",
       "shear_factor": -0.25,
       "top_bar_height": 35,
-      "top_bar_radius": 10,
-      "wallpaper_dir": "~/Wallpaper"
+      "top_bar_radius": 10
     }
   }
 }

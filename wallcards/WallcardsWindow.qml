@@ -1,66 +1,58 @@
+import qs.Commons
+import qs.Services.UI
 
-import Qt.labs.folderlistmodel
-import Qt5Compat.GraphicalEffects
-import QtMultimedia
 import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import Qt.labs.folderlistmodel
+import Qt5Compat.GraphicalEffects
+import QtMultimedia
 
-import qs.Commons
-import qs.Widgets
-import qs.Services.UI
 
-
+// TODO: after thumbnail creation, one card change needed to show image/videos
 
 PanelWindow {
   id: root
 
   property var pluginApi: null
 
-  // ---------- Configuration ----------
+  // ── Configuration ──
 
   property var cfg: pluginApi?.pluginSettings || ({})
   property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
 
-  property string cache_dir: (cfg.cache_dir || defaults.cache_dir).replace(/^~/, Quickshell.env("HOME"))
-  property int card_height: cfg.card_height || defaults.card_height
-  property int card_spacing: cfg.card_spacing || defaults.card_spacing
-  property int card_strip_width: cfg.card_strip_width || defaults.card_strip_width
-  property int card_radius: cfg.card_radius || defaults.card_radius
-  property int cards_shown: cfg.cards_shown || defaults.cards_shown
-  property var filter_images: cfg.filter_images || defaults.filter_images
-  property var filter_videos: cfg.filter_videos || defaults.filter_videos
-  property var shear_factor: cfg.shear_factor || defaults.shear_factor
-  property var top_bar_height: cfg.top_bar_height || defaults.top_bar_height
-  property var top_bar_radius: cfg.top_bar_radius || defaults.top_bar_radius
-  property string wallpaper_dir: (cfg.wallpaper_dir || defaults.wallpaper_dir).replace(/^~/, Quickshell.env("HOME"))
-
-  // TODO: colors von noctalia nutzen
-  // property color test: Color.mPrimary || "red"
-  // property var test2: Style.marginXS
-
-  // TODO: init filter als config
-
-  property bool livePreview: false
-  property string fontFamily: "Monaspace Krypton"
-  property int animationDuration: 750
+  property int animationDuration: cfg.animation_duration || defaults.animation_duration
+  property string cacheDir: Settings.cacheDir + "/thumbnails/"
+  property int contentHeight2: cfg.card_height || defaults.card_height
+  property int cardSpacing: cfg.card_spacing || defaults.card_spacing
+  property int cardStripWidth: cfg.card_strip_width || defaults.card_strip_width
+  property int cardRadius: cfg.card_radius || defaults.card_radius
+  property int cardsShown: cfg.cards_shown || defaults.cards_shown
+  property var filterImages: cfg.filter_images || defaults.filter_images
+  property var filterVideos: cfg.filter_videos || defaults.filter_videos
+  property bool livePreview: cfg.live_preview || defaults.live_preview
+  property string selectedFilter: cfg.selected_filter || defaults.selected_filter
+  property var shearFactor: cfg.shear_factor || defaults.shear_factor
+  property var topBarHeight: cfg.top_bar_height || defaults.top_bar_height
+  property var topBarRadius: cfg.top_bar_radius || defaults.top_bar_radius
+  // TODO: add video dir here?
+  property string wallpaperDir: Settings.data.wallpaper.directory
 
   property bool loading: true
-  property int filteredCount: filteredItems.length
-  property int pendingProcesses: 0
-  property string selected_filter: "images"
   property string loadingMessage
+  property int pendingProcesses: 0
   property var filteredItems: []
+  property int filteredCount: filteredItems.length
 
   function isVideo(fileName) {
     var ext = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
-    return filter_videos.indexOf(ext) !== -1;
+    return filterVideos.indexOf(ext) !== -1;
   }
 
   function isImage(fileName) {
     var ext = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
-    return filter_images.indexOf(ext) !== -1;
+    return filterImages.indexOf(ext) !== -1;
   }
 
   function rebuildFilteredItems() {
@@ -69,7 +61,7 @@ PanelWindow {
       var fn = folderModel.get(i, "fileName");
       var fp = folderModel.get(i, "filePath");
 
-      if (selected_filter === "all" || (selected_filter === "images" && isImage(fn)) || (selected_filter === "videos" && isVideo(fn)))
+      if (selectedFilter === "all" || (selectedFilter === "images" && isImage(fn)) || (selectedFilter === "videos" && isVideo(fn)))
         items.push({
           "fileName": fn,
           "filePath": fp
@@ -98,7 +90,7 @@ PanelWindow {
 
   function createThumbnails() {
     var proc = processComponent.createObject(null, {
-      "command": ["mkdir", "-p", cache_dir]
+      "command": ["mkdir", "-p", cacheDir]
     });
     proc.running = true;
 
@@ -107,7 +99,7 @@ PanelWindow {
           var filePath = folderModel.get(idx, "filePath");
           var fileName = folderModel.get(idx, "fileName");
           var thumbName = thumbnailName(fileName);
-          var thumbnail = cache_dir + "/" + thumbName;
+          var thumbnail = cacheDir + "/" + thumbName;
 
           var cmd;
           if (isVideo(fileName))
@@ -171,45 +163,16 @@ PanelWindow {
   exclusiveZone: 0
   implicitHeight: screen ? screen.height : 1080
   implicitWidth: screen ? screen.width : 1920
-  onSelected_filterChanged: rebuildFilteredItems()
+  onSelectedFilterChanged: rebuildFilteredItems()
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
   WlrLayershell.layer: WlrLayer.Overlay
-
-  FileView {
-    path: Quickshell.env("HOME") + "/.config/noctalia/colors.json"
-    watchChanges: true
-    onFileChanged: {
-      reload();
-    }
-
-    JsonAdapter {
-      id: colors
-
-      property string mPrimary
-      property string mOnPrimary
-      property string mSecondary
-      property string mOnSecondary
-      property string mTertiary
-      property string mOnTertiary
-      property string mError
-      property string mOnError
-      property string mSurface
-      property string mOnSurface
-      property string mSurfaceVariant
-      property string mOnSurfaceVariant
-      property string mOutline
-      property string mShadow
-      property string mHover
-      property string mOnHover
-    }
-  }
 
   FolderListModel {
     id: folderModel
 
-    folder: Qt.resolvedUrl("file://" + wallpaper_dir)
+    folder: Qt.resolvedUrl("file://" + wallpaperDir)
     showDirs: false
-    nameFilters: (filter_images || []).concat(filter_videos || []).map(function(ext) { return "*." + ext; })
+    nameFilters: (filterImages || []).concat(filterVideos || []).map(function(ext) { return "*." + ext; })
     sortField: FolderListModel.Name
     onStatusChanged: {
       if (status === FolderListModel.Ready) {
@@ -235,7 +198,7 @@ PanelWindow {
     property real dimOpacity: 0
 
     anchors.fill: parent
-    color: colors.mOnSurface
+    color: Color.mOnSurface
     opacity: dimOpacity
     Component.onCompleted: {
       dimOpacity = 0.0;
@@ -260,7 +223,7 @@ PanelWindow {
     width: loadingRow.width + 24
     height: loadingRow.height + 12
     radius: 8
-    color: Qt.alpha(colors.mSurface, 0.9)
+    color: Qt.alpha(Color.mSurface, 0.9)
 
     Row {
       id: loadingRow
@@ -282,7 +245,7 @@ PanelWindow {
             width: 4
             height: 4
             radius: 2
-            color: colors.mPrimary
+            color: Color.mPrimary
             x: 6 + 5 * Math.cos(angle + spinAnimation.value)
             y: 6 + 5 * Math.sin(angle + spinAnimation.value)
 
@@ -314,8 +277,8 @@ PanelWindow {
       Text {
         anchors.verticalCenter: parent.verticalCenter
         text: root.loadingMessage
-        color: colors.mOnSurface
-        font.family: root.fontFamily
+        color: Color.mOnSurface
+        font.family: Settings.data.ui.fontDefault
         font.pixelSize: 16
       }
     }
@@ -326,19 +289,19 @@ PanelWindow {
     id: contentArea
 
     anchors.horizontalCenter: parent.horizontalCenter
-    y: (parent.height - card_height) / 2
+    y: (parent.height - contentHeight2) / 2
     width: parent.width
-    height: card_height
+    height: contentHeight2
 
     // ── Top bar ──
     Rectangle {
       id: infoBar
 
-      property int sideCount: Math.floor(cards_shown / 2) - 1
+      property int sideCount: Math.floor(cardsShown / 2) - 1
       property real centerWidth: contentArea.width / 3
-      property real centerX: centerWidth + card_height * shear_factor * -0.1
-      property real stripWidth: card_strip_width
-      property real stripGap: card_spacing
+      property real centerX: centerWidth + contentHeight2 * shearFactor * -0.1
+      property real stripWidth: cardStripWidth
+      property real stripGap: cardSpacing
       property real leftEdge: centerX - stripGap - sideCount * stripWidth - (sideCount - 1) * stripGap
       property real rightEdge: centerX + centerWidth + stripGap + (sideCount - 1) * (stripWidth + stripGap) + stripWidth
 
@@ -357,12 +320,12 @@ PanelWindow {
       }
 
       anchors.top: parent.top
-      color: colors.mSurface
+      color: Color.mSurface
       opacity: .90
       x: leftEdge + entryOffset
       width: rightEdge - leftEdge
-      height: top_bar_height
-      radius: top_bar_radius || 10
+      height: topBarHeight
+      radius: topBarRadius || 10
 
       // ── Left ──
       Row {
@@ -378,8 +341,8 @@ PanelWindow {
           Text {
             anchors.verticalCenter: parent.verticalCenter
             text: `${cardStack.currentIndex + 1} / ${root.filteredCount}`
-            color: colors.mPrimary
-            font.family: root.fontFamily
+            color: Color.mPrimary
+            font.family: Settings.data.ui.fontDefault
             font.pixelSize: 13
             font.letterSpacing: 0.5
           }
@@ -417,15 +380,15 @@ PanelWindow {
 
           Rectangle {
             required property var modelData
-            property bool active: root.selected_filter === modelData.key
-            property color ac: active ? colors.mOnSurface : colors.mOnSurfaceVariant
+            property bool active: root.selectedFilter === modelData.key
+            property color ac: active ? Color.mOnSurface : Color.mOnSurfaceVariant
 
             width: fc.width + 14
             height: 24
             radius: 6
             color: active ? Qt.alpha(ac, 0.15) : "transparent"
             border.width: 1
-            border.color: active ? Qt.alpha(ac, 0.5) : Qt.alpha(colors.mOutline, 0.3)
+            border.color: active ? Qt.alpha(ac, 0.5) : Qt.alpha(Color.mOutline, 0.3)
 
             Row {
               id: fc
@@ -442,7 +405,7 @@ PanelWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 text: modelData.label
                 color: ac
-                font.family: root.fontFamily
+                font.family: Settings.data.ui.fontDefault
                 font.pixelSize: 10
               }
               Rectangle {
@@ -455,7 +418,7 @@ PanelWindow {
                   anchors.centerIn: parent
                   text: modelData.hotkey
                   color: Qt.alpha(ac, active ? 1 : 0.7)
-                  font.family: root.fontFamily
+                  font.family: Settings.data.ui.fontDefault
                   font.pixelSize: 8
                   font.bold: true
                 }
@@ -465,7 +428,7 @@ PanelWindow {
             MouseArea {
               anchors.fill: parent
               cursorShape: Qt.PointingHandCursor
-              onClicked: root.selected_filter = modelData.key
+              onClicked: root.selectedFilter = modelData.key
             }
             Behavior on color {
               ColorAnimation {
@@ -494,9 +457,9 @@ PanelWindow {
           width: rndContent.width + 14
           height: 24
           radius: 6
-          color: Qt.alpha(colors.mOnSurface, 0.06)
+          color: Qt.alpha(Color.mOnSurface, 0.06)
           border.width: 1
-          border.color: Qt.alpha(colors.mOutline, 0.3)
+          border.color: Qt.alpha(Color.mOutline, 0.3)
 
           Row {
             id: rndContent
@@ -506,7 +469,7 @@ PanelWindow {
             Text {
               anchors.verticalCenter: parent.verticalCenter
               text: "\ue043"
-              color: colors.mOnSurfaceVariant
+              color: Color.mOnSurfaceVariant
               font.family: "Material Symbols Outlined"
               font.pixelSize: 13
             }
@@ -514,8 +477,8 @@ PanelWindow {
             Text {
               anchors.verticalCenter: parent.verticalCenter
               text: "Shuffle"
-              color: colors.mOnSurfaceVariant
-              font.family: root.fontFamily
+              color: Color.mOnSurfaceVariant
+              font.family: Settings.data.ui.fontDefault
               font.pixelSize: 10
             }
 
@@ -524,12 +487,12 @@ PanelWindow {
               height: 14
               radius: 3
               anchors.verticalCenter: parent.verticalCenter
-              color: Qt.alpha(colors.mOnSurface, 0.06)
+              color: Qt.alpha(Color.mOnSurface, 0.06)
               Text {
                 anchors.centerIn: parent
                 text: "R"
-                color: Qt.alpha(colors.mOnSurfaceVariant, 0.7)
-                font.family: root.fontFamily
+                color: Qt.alpha(Color.mOnSurfaceVariant, 0.7)
+                font.family: Settings.data.ui.fontDefault
                 font.pixelSize: 8
                 font.bold: true
               }
@@ -547,7 +510,7 @@ PanelWindow {
           width: 1
           height: 14
           anchors.verticalCenter: parent.verticalCenter
-          color: Qt.alpha(colors.mOutline, 0.3)
+          color: Qt.alpha(Color.mOutline, 0.3)
         }
 
         // Live preview toggle
@@ -557,9 +520,9 @@ PanelWindow {
           width: previewContent.width + 14
           height: 24
           radius: 6
-          color: root.livePreview ? Qt.alpha(colors.mTertiary, 0.15) : Qt.alpha(colors.mOnSurface, 0.06)
+          color: root.livePreview ? Qt.alpha(Color.mTertiary, 0.15) : Qt.alpha(Color.mOnSurface, 0.06)
           border.width: 1
-          border.color: root.livePreview ? Qt.alpha(colors.mTertiary, 0.5) : Qt.alpha(colors.mOutline, 0.3)
+          border.color: root.livePreview ? Qt.alpha(Color.mTertiary, 0.5) : Qt.alpha(Color.mOutline, 0.3)
 
           Row {
             id: previewContent
@@ -571,7 +534,7 @@ PanelWindow {
               height: 6
               radius: 3
               anchors.verticalCenter: parent.verticalCenter
-              color: root.livePreview ? colors.mTertiary : Qt.alpha(colors.mOnSurfaceVariant, 0.4)
+              color: root.livePreview ? Color.mTertiary : Qt.alpha(Color.mOnSurfaceVariant, 0.4)
 
               SequentialAnimation on opacity {
                 running: root.livePreview
@@ -592,8 +555,8 @@ PanelWindow {
             Text {
               anchors.verticalCenter: parent.verticalCenter
               text: "Live"
-              color: root.livePreview ? colors.mTertiary : colors.mOnSurfaceVariant
-              font.family: root.fontFamily
+              color: root.livePreview ? Color.mTertiary : Color.mOnSurfaceVariant
+              font.family: Settings.data.ui.fontDefault
               font.pixelSize: 10
               Behavior on color {
                 ColorAnimation {
@@ -607,12 +570,12 @@ PanelWindow {
               height: 14
               radius: 3
               anchors.verticalCenter: parent.verticalCenter
-              color: root.livePreview ? Qt.alpha(colors.mTertiary, 0.2) : Qt.alpha(colors.mOnSurface, 0.06)
+              color: root.livePreview ? Qt.alpha(Color.mTertiary, 0.2) : Qt.alpha(Color.mOnSurface, 0.06)
               Text {
                 anchors.centerIn: parent
                 text: "P"
-                color: root.livePreview ? colors.mTertiary : Qt.alpha(colors.mOnSurfaceVariant, 0.7)
-                font.family: root.fontFamily
+                color: root.livePreview ? Color.mTertiary : Qt.alpha(Color.mOnSurfaceVariant, 0.7)
+                font.family: Settings.data.ui.fontDefault
                 font.pixelSize: 8
                 font.bold: true
               }
@@ -639,7 +602,7 @@ PanelWindow {
       }
 
       transform: Shear {
-        xFactor: shear_factor
+        xFactor: shearFactor
       }
     }
 
@@ -648,13 +611,13 @@ PanelWindow {
       id: cardStack
 
       property int currentIndex: 0
-      property int visibleCount: cards_shown
+      property int visibleCount: cardsShown
       property int halfVisible: Math.floor(visibleCount / 2)
 
-      property real cardHeight: card_height / 1.25 - top_bar_height
+      property real contentHeight: contentHeight2 / 1.25 - topBarHeight
       property real centerWidth: contentArea.width / 3
-      property real stripWidth: card_strip_width
-      property real stripGap: card_spacing
+      property real stripWidth: cardStripWidth
+      property real stripGap: cardSpacing
       property real centerX: width / 2 - centerWidth / 2
 
       property real runningIndex: 0
@@ -736,11 +699,11 @@ PanelWindow {
         else if (event.key === Qt.Key_P)
           root.livePreview = !root.livePreview;
         else if (event.key === Qt.Key_A)
-          root.selected_filter = "all";
+          root.selectedFilter = "all";
         else if (event.key === Qt.Key_I)
-          root.selected_filter = "images";
+          root.selectedFilter = "images";
         else if (event.key === Qt.Key_V)
-          root.selected_filter = "videos";
+          root.selectedFilter = "videos";
         else if (event.key === Qt.Key_R)
           cardStack.randomJump();
         else if (event.key === Qt.Key_Return || event.key === Qt.Key_Space) {
@@ -772,7 +735,7 @@ PanelWindow {
           property bool isVideoFile: root.isVideo(currentFileName)
           property bool isCenter: offset === 0
 
-          property string targetSource: root.filteredCount > 0 ? `file://${cache_dir}/${root.thumbnailName(currentFileName)}` : ""
+          property string targetSource: root.filteredCount > 0 ? `file://${cacheDir}/${root.thumbnailName(currentFileName)}` : ""
 
           onTargetSourceChanged: {
             if (img.source.toString() !== "" && img.source.toString() !== targetSource) {
@@ -785,7 +748,7 @@ PanelWindow {
 
           visible: (x + width) > 0 && x < cardStack.width
           width: cardStack.slotToWidth(fractionalSlot)
-          height: cardStack.cardHeight
+          height: cardStack.contentHeight
           x: cardStack.slotToX(fractionalSlot)
           y: 0
           z: isCenter ? 100 : cardStack.visibleCount - Math.abs(offset)
@@ -846,7 +809,7 @@ PanelWindow {
               id: mask
 
               anchors.fill: parent
-              radius: card_radius
+              radius: cardRadius
               visible: false
             }
 
@@ -928,7 +891,7 @@ PanelWindow {
                     maskSource: Rectangle {
                       width: videoContainer.width
                       height: videoContainer.height
-                      radius: card_radius
+                      radius: cardRadius
                     }
                   }
                 }
@@ -941,10 +904,10 @@ PanelWindow {
               property int trackedModel: cardDelegate.modelIndex
 
               anchors.fill: parent
-              radius: card_radius
+              radius: cardRadius
               color: "transparent"
               border.width: isCenter ? 2 : 1
-              border.color: isCenter ? colors.mOutline : colors.mSurface
+              border.color: isCenter ? Color.mOutline : Color.mSurface
               z: 20
               opacity: 1
               onTrackedModelChanged: {
@@ -977,7 +940,7 @@ PanelWindow {
               width: badgeRow.width + 16
               height: badgeRow.height + 8
               radius: 6
-              color: cardDelegate.isVideoFile ? colors.mSurface : colors.mSurfaceVariant
+              color: cardDelegate.isVideoFile ? Color.mSurface : Color.mSurfaceVariant
 
               Row {
                 id: badgeRow
@@ -990,7 +953,7 @@ PanelWindow {
 
                   anchors.verticalCenter: parent.verticalCenter
                   text: cardDelegate.isVideoFile ? "\ue04b" : "\ue3f4"
-                  color: cardDelegate.isVideoFile ? colors.mOnSurface : colors.mOnSurfaceVariant
+                  color: cardDelegate.isVideoFile ? Color.mOnSurface : Color.mOnSurfaceVariant
                   font.family: "Material Symbols Outlined"
                   font.pixelSize: 12
                 }
@@ -1000,8 +963,8 @@ PanelWindow {
 
                   anchors.verticalCenter: parent.verticalCenter
                   text: cardDelegate.currentFileName.substring(cardDelegate.currentFileName.lastIndexOf(".") + 1).toUpperCase()
-                  color: cardDelegate.isVideoFile ? colors.mPrimary : colors.mSecondary
-                  font.family: root.fontFamily
+                  color: cardDelegate.isVideoFile ? Color.mPrimary : Color.mSecondary
+                  font.family: Settings.data.ui.fontDefault
                   font.pixelSize: 12
                   font.bold: true
                   font.letterSpacing: 0.5
@@ -1010,7 +973,7 @@ PanelWindow {
             }
 
             transform: Shear {
-              xFactor: shear_factor
+              xFactor: shearFactor
             }
           }
 
@@ -1027,7 +990,7 @@ PanelWindow {
             width: Math.min(nameLabel.implicitWidth + 24, parent.width - 40)
             height: nameLabel.implicitHeight + 10
             radius: 8
-            color: cardDelegate.isVideoFile ? colors.mSurface : colors.mSurfaceVariant
+            color: cardDelegate.isVideoFile ? Color.mSurface : Color.mSurfaceVariant
 
             Text {
               id: nameLabel
@@ -1035,15 +998,15 @@ PanelWindow {
               anchors.centerIn: parent
               width: parent.width
               text: cardDelegate.currentFileName.substring(0, cardDelegate.currentFileName.lastIndexOf("."))
-              color: cardDelegate.isVideoFile ? colors.mOnSurface : colors.mOnSurfaceVariant
-              font.family: root.fontFamily
+              color: cardDelegate.isVideoFile ? Color.mOnSurface : Color.mOnSurfaceVariant
+              font.family: Settings.data.ui.fontDefault
               font.pixelSize: 12
               elide: Text.ElideMiddle
               horizontalAlignment: Text.AlignHCenter
             }
 
             transform: Shear {
-              xFactor: shear_factor
+              xFactor: shearFactor
             }
           }
 
