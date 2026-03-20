@@ -911,15 +911,15 @@ Item {
     var queueEntries = mainInstance?.queueEntries || [];
     var queuedCount = queueEntries.length;
     var items = [
-          buildSectionItem("Queue",
+          buildSectionItem(pluginApi?.tr("queue.title"),
                            mainInstance?.lastError
-                               ? ("Last error: " + mainInstance.lastError)
-                               : (mainInstance?.lastNotice || (mainInstance?.queueActive ? "Queue is active and waiting for the next finish." : "Queue is idle.")),
+                               ? (pluginApi?.tr("errors.lastError", {"error": mainInstance.lastError}))
+                               : (mainInstance?.lastNotice || (mainInstance?.queueActive ? (pluginApi?.tr("queue.active")) : (pluginApi?.tr("queue.idle")))),
                            mainInstance?.queueActive ? "list-check" : "playlist")
         ];
 
     if (queryText === "start") {
-      items.push(buildQueueActionItem("Start queue", "Begin queued playback now.", "player-play", 20, function () {
+      items.push(buildQueueActionItem(pluginApi?.tr("queue.start"), pluginApi?.tr("queue.startNow"), "player-play", 20, function () {
                                         mainInstance?.startQueue();
                                         if (launcher) {
                                           launcher.close();
@@ -929,28 +929,28 @@ Item {
     }
 
     if (queryText === "stop") {
-      items.push(buildQueueActionItem("Stop queue", "Pause queue mode without clearing the list.", "player-pause", 19, function () {
+      items.push(buildQueueActionItem(pluginApi?.tr("queue.stop"), pluginApi?.tr("queue.stopPause"), "player-pause", 19, function () {
                                         mainInstance?.stopQueue();
                                       }));
       return items;
     }
 
     if (queryText === "skip") {
-      items.push(buildQueueActionItem("Skip to next", "Start the next queued track now.", "player-skip-forward", 18, function () {
+      items.push(buildQueueActionItem(pluginApi?.tr("queue.skip"), pluginApi?.tr("queue.skipNow"), "player-skip-forward", 18, function () {
                                         mainInstance?.skipQueue();
                                       }));
       return items;
     }
 
     if (queryText === "clear") {
-      items.push(buildQueueActionItem("Clear queue", "Remove all queued tracks.", "trash", 18, function () {
+      items.push(buildQueueActionItem(pluginApi?.tr("queue.clear"), pluginApi?.tr("queue.clearRemove"), "trash", 18, function () {
                                         mainInstance?.clearQueue();
                                       }));
       return items;
     }
 
     if (queryText === "saved" || queryText === "library" || queryText === "autoplay") {
-      items.push(buildQueueActionItem("Autoplay saved tracks", "Load the saved library into queue and start playing it.", "bookmark", 17, function () {
+      items.push(buildQueueActionItem(pluginApi?.tr("queue.autoplaySaved"), pluginApi?.tr("queue.autoplaySavedDesc"), "bookmark", 17, function () {
                                         mainInstance?.autoplaySavedTracks(false);
                                         if (launcher) {
                                           launcher.close();
@@ -960,7 +960,7 @@ Item {
     }
 
     if (queryText === "saved shuffle" || queryText === "library shuffle" || queryText === "autoplay shuffle" || queryText === "shuffle saved") {
-      items.push(buildQueueActionItem("Autoplay saved tracks (shuffle)", "Shuffle the saved library into queue and start playing it.", "arrows-shuffle", 16, function () {
+      items.push(buildQueueActionItem(pluginApi?.tr("queue.autoplaySavedShuffle"), pluginApi?.tr("queue.autoplaySavedShuffleDesc"), "arrows-shuffle", 16, function () {
                                         mainInstance?.autoplaySavedTracks(true);
                                         if (launcher) {
                                           launcher.close();
@@ -969,30 +969,30 @@ Item {
       return items;
     }
 
-    items.push(buildQueueActionItem("Start queue", "Arm the queue or start the first queued track.", "player-play", 8, function () {
+    items.push(buildQueueActionItem(pluginApi?.tr("queue.start"), pluginApi?.tr("queue.startArm"), "player-play", 8, function () {
                                       mainInstance?.startQueue();
                                     }));
-    items.push(buildQueueActionItem("Stop queue", "Disable auto-advance and keep queued tracks.", "player-pause", 7, function () {
+    items.push(buildQueueActionItem(pluginApi?.tr("queue.stop"), pluginApi?.tr("queue.stopKeep"), "player-pause", 7, function () {
                                       mainInstance?.stopQueue();
                                     }));
-    items.push(buildQueueActionItem("Skip to next", "Jump to the next queued track.", "player-skip-forward", 7, function () {
+    items.push(buildQueueActionItem(pluginApi?.tr("queue.skip"), pluginApi?.tr("queue.skipJump"), "player-skip-forward", 7, function () {
                                       mainInstance?.skipQueue();
                                     }));
-    items.push(buildQueueActionItem("Autoplay saved tracks", "Turn your saved music library into the active queue.", "bookmark", 6, function () {
+    items.push(buildQueueActionItem(pluginApi?.tr("queue.autoplaySaved"), pluginApi?.tr("queue.autoplaySavedActiveDesc"), "bookmark", 6, function () {
                                       mainInstance?.autoplaySavedTracks(false);
                                     }));
-    items.push(buildQueueActionItem("Autoplay saved tracks (shuffle)", "Shuffle your saved music library into the active queue.", "arrows-shuffle", 5, function () {
+    items.push(buildQueueActionItem(pluginApi?.tr("queue.autoplaySavedShuffle"), pluginApi?.tr("queue.autoplaySavedShuffleActiveDesc"), "arrows-shuffle", 5, function () {
                                       mainInstance?.autoplaySavedTracks(true);
                                     }));
-    items.push(buildQueueActionItem("Clear queue", "Empty the queue list.", "trash", 6, function () {
+    items.push(buildQueueActionItem(pluginApi?.tr("queue.clear"), pluginApi?.tr("queue.clearEmpty"), "trash", 6, function () {
                                       mainInstance?.clearQueue();
                                     }));
 
     if (queuedCount === 0) {
       items.push({
                    "id": "queue-empty",
-                   "name": "Queue is empty",
-                   "description": "Use save, playlists, or inline queue actions to add tracks.",
+                   "name": pluginApi?.tr("queue.empty"),
+                   "description": pluginApi?.tr("queue.emptyDesc"),
                    "icon": "playlist-off",
                    "isTablerIcon": true,
                    "isImage": false,
@@ -1026,7 +1026,9 @@ Item {
       for (var i = 0; i < recentEntries.length; i++) {
         var relativeTime = MusicUtils.formatRelativeTime(recentEntries[i].lastPlayedAt);
         items.push(buildLibraryResultItem(recentEntries[i], {
-                                            "prefix": mainInstance?.showPlayStatsMetadata !== false && relativeTime ? ((pluginApi?.tr("home.recent")) + " • " + relativeTime) : (pluginApi?.tr("home.recent")),
+                                            "prefix": mainInstance?.showPlayStatsMetadata !== false && relativeTime
+                                                ? (pluginApi?.tr("home.recentWithTime", {"time": relativeTime}))
+                                                : (pluginApi?.tr("home.recent")),
                                             "icon": recentEntries[i].id === mainInstance?.currentEntryId && mainInstance?.isPlaying ? "disc" : "history"
                                           }));
       }
@@ -1037,7 +1039,7 @@ Item {
       for (var j = 0; j < topEntries.length; j++) {
         items.push(buildLibraryResultItem(topEntries[j], {
                                             "prefix": mainInstance?.showPlayStatsMetadata !== false
-                                                ? ((pluginApi?.tr("home.top")) + " • " + formatPlayCount(topEntries[j].playCount || 0))
+                                                ? (pluginApi?.tr("home.topWithPlays", {"plays": formatPlayCount(topEntries[j].playCount || 0)}))
                                                 : (pluginApi?.tr("home.top")),
                                             "icon": topEntries[j].id === mainInstance?.currentEntryId && mainInstance?.isPlaying ? "disc" : "chart-bar"
                                           }));

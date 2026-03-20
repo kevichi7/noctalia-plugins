@@ -37,7 +37,7 @@ Item {
   readonly property bool showDurationMetadata: detailCacheOwner?.mainInstance?.showDurationMetadata !== false
   readonly property bool showPlayStatsMetadata: detailCacheOwner?.mainInstance?.showPlayStatsMetadata !== false
   readonly property bool showStatusMetadata: detailCacheOwner?.mainInstance?.showStatusMetadata !== false
-  readonly property real currentSpeed: Number(detailCacheOwner?.mainInstance?.currentSpeed || 1)
+  readonly property real currentSpeed: detailCacheOwner?.mainInstance?.currentSpeed || 1
   readonly property real maxPreviewHeight: Math.round(560 * Style.uiScaleRatio)
 
   implicitHeight: Math.min(previewContent.implicitHeight + (Style.marginS * 2), maxPreviewHeight)
@@ -90,12 +90,12 @@ Item {
       return targetItem?.isPlaying === true;
     }
 
-    var itemId = String(targetItem.id || "").trim();
+    var itemId = (targetItem.id || "").trim();
     if (itemId.length > 0 && mainInstance.currentEntryId === itemId) {
       return true;
     }
 
-    var itemUrl = String(targetItem.url || "").trim();
+    var itemUrl = (targetItem.url || "").trim();
     return itemUrl.length > 0 && mainInstance.currentUrl === itemUrl;
   }
 
@@ -110,12 +110,12 @@ Item {
       return targetItem?.isStarting === true;
     }
 
-    var itemId = String(targetItem.id || "").trim();
+    var itemId = (targetItem.id || "").trim();
     if (itemId.length > 0 && mainInstance.currentEntryId === itemId) {
       return true;
     }
 
-    var itemUrl = String(targetItem.url || "").trim();
+    var itemUrl = (targetItem.url || "").trim();
     return itemUrl.length > 0 && mainInstance.currentUrl === itemUrl;
   }
 
@@ -124,7 +124,7 @@ Item {
     if (!isItemStartingNow(currentItem)) {
       return "";
     }
-    return String(mainInstance?.playbackStartingMessage || detailCacheOwner?.pluginApi?.tr("status.startingPlayback"));
+    return mainInstance?.playbackStartingMessage || detailCacheOwner?.pluginApi?.tr("status.startingPlayback");
   }
 
   function richMetadataAllowedForItem(item) {
@@ -220,7 +220,7 @@ Item {
 
   function fullDescription() {
     var visibleDetailData = richMetadataAllowedForItem(currentItem) ? detailData : null;
-    return String(visibleDetailData?.description || "").trim();
+    return (visibleDetailData?.description || "").trim();
   }
 
   function descriptionNeedsExpansion() {
