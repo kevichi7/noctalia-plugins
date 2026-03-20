@@ -1,5 +1,5 @@
 {
-  "id": "workspace-overview-plugin",
+  "id": "workspace-overview",
   "name": "Workspace Overview",
   "version": "1.0.0",
   "minNoctaliaVersion": "3.6.0",
@@ -7,7 +7,12 @@
   "license": "MIT",
   "repository": "https://github.com/noctalia-dev/noctalia-plugins",
   "description": "Workspace overview with live window previews and wallpaper backgrounds for Hyprland.",
-  "tags": ["Hyprland", "Bar", "Panel", "Utility"],
+  "tags": [
+    "Hyprland",
+    "Bar",
+    "Panel",
+    "Utility"
+  ],
   "entryPoints": {
     "panel": "Panel.qml",
     "barWidget": "BarWidget.qml",

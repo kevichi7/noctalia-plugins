@@ -3,23 +3,21 @@ import Quickshell.Io
 import qs.Commons
 
 Item {
-    id: root
-    // O objectName é CRUCIAL para que o IPC o encontre
-    objectName: "main" 
+    id: root 
     
     property var pluginApi: null
 
     IpcHandler {
-        target: "plugin:workspace-overview-plugin"
+        target: "plugin:workspace-overview"
 
         function toggle() {
             root.showOverview();
         }
     }
 
-    // Esta função será exposta
+    // This function will be exposed
     function showOverview() {
-        console.log("-> Recebido comando para abrir o Overview");
+        Logger.i("-> Received command to open the Overview");
         if (pluginApi) {
             pluginApi.withCurrentScreen(screen => {
                 pluginApi.togglePanel(screen);
@@ -28,6 +26,6 @@ Item {
     }
 
     Component.onCompleted: {
-        console.log("-> [Main] Workspace Overview está pronto e ouvindo.");
+        Logger.i("-> [Main] Workspace Overview is ready and listening.");
     }
 }
