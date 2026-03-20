@@ -166,7 +166,7 @@
     {
       "id": "color-scheme-creator",
       "name": "Color Scheme Creator",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "official": true,
       "author": "Noctalia Team",
       "description": "Create and manage custom predefined color schemes with a visual color editor.",
@@ -177,7 +177,7 @@
         "Theming",
         "Utility"
       ],
-      "lastUpdated": "2026-02-24T17:49:23-05:00"
+      "lastUpdated": "2026-03-20T21:10:35+01:00"
     },
     {
       "id": "currency-exchange",
@@ -198,7 +198,7 @@
     {
       "id": "custom-commands",
       "name": "Custom Commands",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "official": true,
       "author": "Noctalia Team",
       "description": "Define and run custom shell commands from the launcher",
@@ -208,12 +208,12 @@
       "tags": [
         "Launcher"
       ],
-      "lastUpdated": "2026-03-14T09:01:32-04:00"
+      "lastUpdated": "2026-03-20T21:27:33+01:00"
     },
     {
       "id": "custom-sticker",
       "name": "Custom Stickers",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "official": false,
       "author": "spiros132",
       "description": "Custom stickers (images) that you can put on the desktop as desktop widgets.",
@@ -224,12 +224,12 @@
         "Desktop",
         "Fun"
       ],
-      "lastUpdated": "2026-03-19T20:22:45+01:00"
+      "lastUpdated": "2026-03-20T21:37:46+01:00"
     },
     {
       "id": "deskvis",
       "name": "DeskVis",
-      "version": "2.0.1",
+      "version": "2.0.2",
       "official": false,
       "author": "HAVEKziad",
       "description": "Audio visualizer desktop widget — bars, wave, or mirror. Supports all directions. Transparent, follows color scheme.",
@@ -239,7 +239,7 @@
         "Desktop",
         "Audio"
       ],
-      "lastUpdated": "2026-03-13T12:58:00Z"
+      "lastUpdated": "2026-03-20T22:21:12+01:00"
     },
     {
       "id": "dns-switcher",
