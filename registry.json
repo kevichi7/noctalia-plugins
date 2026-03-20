@@ -38,7 +38,7 @@
     {
       "id": "asus_um5606_fan_state",
       "name": "ASUS UM5606 Fan State",
-      "version": "1.1.3",
+      "version": "1.1.4",
       "official": false,
       "author": "ThatOneCalculator",
       "description": "Set the fan state on the ZenBook S 16 UM5606",
@@ -49,7 +49,7 @@
         "Bar",
         "System"
       ],
-      "lastUpdated": "2026-03-13T14:55:56-07:00"
+      "lastUpdated": "2026-03-20T20:28:11+01:00"
     },
     {
       "id": "battery-actions",
@@ -86,7 +86,7 @@
     {
       "id": "calendar-widget",
       "name": "Desktop Calendar",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "official": false,
       "author": "Simon",
       "description": "Monthly calendar with today highlighted.",
@@ -97,7 +97,7 @@
         "Desktop",
         "Utility"
       ],
-      "lastUpdated": "2026-03-19T19:19:35+01:00"
+      "lastUpdated": "2026-03-20T20:37:22+01:00"
     },
     {
       "id": "calibre-provider",
@@ -152,7 +152,7 @@
     {
       "id": "coin-flip",
       "name": "Coin Flipper",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "official": false,
       "author": "DanisDeveloper",
       "description": "Simple bar widget with notification about result",
@@ -161,7 +161,7 @@
       "tags": [
         "Bar"
       ],
-      "lastUpdated": "2026-03-12T21:45:04-04:00"
+      "lastUpdated": "2026-03-20T20:43:59+01:00"
     },
     {
       "id": "color-scheme-creator",
