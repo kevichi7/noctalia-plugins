@@ -148,7 +148,9 @@ Item {
   property var previewDetailCache: ({})
   property var panelPreviewItem: null
   property bool panelPreviewFollowsPlayback: true
+  property bool panelPreviewDismissed: false
   property real previewPaneWidth: 0
+  property real preferredPreviewPaneWidth: 0
 
   anchors.fill: parent
 
@@ -942,7 +944,7 @@ Item {
       "previewDelayMs": 350,
       "provider": root,
       "sourceLabel": providerLabel(providerKey),
-      "isSaved": mainInstance?.isSaved(normalized) === true || section === "library",
+      "isSaved": mainInstance?.isSaved(normalized) === true,
       "isPlaying": isCurrentEntry(normalized),
       "isStarting": isCurrentEntry(normalized) && mainInstance?.playbackStarting === true
     };
@@ -976,15 +978,23 @@ Item {
 
     panelPreviewItem = nextItem;
     panelPreviewFollowsPlayback = false;
+    panelPreviewDismissed = false;
   }
 
   function clearPanelPreview() {
     panelPreviewItem = null;
     panelPreviewFollowsPlayback = false;
+    panelPreviewDismissed = true;
   }
 
   function syncPanelPlaybackPreview(force) {
     if (!showPanelPreview) {
+      return;
+    }
+
+    if (force === true) {
+      panelPreviewDismissed = false;
+    } else if (panelPreviewDismissed) {
       return;
     }
 
@@ -1009,21 +1019,61 @@ Item {
     return Math.max(previewPaneMinWidth, Math.min(maxWidth, value || 0));
   }
 
+  function persistPreviewPaneWidth(value, flush) {
+    var rawWidth = Number(value || 0);
+    if (!isFinite(rawWidth) || rawWidth <= 0) {
+      return previewPaneWidth;
+    }
+    preferredPreviewPaneWidth = rawWidth;
+    var nextWidth = clampPreviewPaneWidth(rawWidth);
+    previewPaneWidth = nextWidth;
+    if (pluginApi?.pluginSettings) {
+      pluginApi.pluginSettings.previewPaneWidth = rawWidth;
+    }
+    if (flush === true && pluginApi) {
+      pluginApi.saveSettings();
+    }
+    return nextWidth;
+  }
+
+  function savedPreviewPaneWidth() {
+    var value = Number(pluginApi?.pluginSettings?.previewPaneWidth
+                       ?? defaults.previewPaneWidth
+                       ?? 0);
+    if (!isFinite(value) || value <= 0) {
+      return 0;
+    }
+    return value;
+  }
+
   function ensurePreviewPaneWidth(force) {
     if (!showPanelPreview || !panelPreviewItem) {
       return;
     }
 
+    if (force === true || preferredPreviewPaneWidth <= 0) {
+      preferredPreviewPaneWidth = savedPreviewPaneWidth();
+    }
+
     if (force === true || previewPaneWidth <= 0) {
+      if (preferredPreviewPaneWidth > 0) {
+        previewPaneWidth = clampPreviewPaneWidth(preferredPreviewPaneWidth);
+        return;
+      }
       var availableWidth = panelTabsRow?.width || 0;
       var fallbackWidth = availableWidth > 0
           ? Math.round(availableWidth * 0.34)
           : Math.round(320 * Style.uiScaleRatio);
-      previewPaneWidth = clampPreviewPaneWidth(fallbackWidth);
+      preferredPreviewPaneWidth = fallbackWidth;
+      previewPaneWidth = clampPreviewPaneWidth(preferredPreviewPaneWidth);
       return;
     }
 
-    previewPaneWidth = clampPreviewPaneWidth(previewPaneWidth);
+    if (preferredPreviewPaneWidth > 0) {
+      previewPaneWidth = clampPreviewPaneWidth(preferredPreviewPaneWidth);
+    } else {
+      previewPaneWidth = clampPreviewPaneWidth(previewPaneWidth);
+    }
   }
 
   component ProviderChip: Rectangle {
@@ -1504,8 +1554,10 @@ Item {
               if (pressed) {
                 root.seekDragging = true;
                 root.localSeekRatio = value;
-              } else if (enabled) {
-                root.mainInstance?.seekToRatio(value);
+              } else {
+                if (enabled) {
+                  root.mainInstance?.seekToRatio(value);
+                }
                 root.seekDragging = false;
                 root.localSeekRatio = -1;
               }
@@ -1728,11 +1780,15 @@ Item {
 
             onWidthChanged: root.ensurePreviewPaneWidth(false)
 
-            NTabView {
-              id: tabView
+            Item {
+              id: tabViewContainer
               Layout.fillWidth: true
               Layout.fillHeight: true
-              currentIndex: tabBar.currentIndex
+
+              NTabView {
+                id: tabView
+                anchors.fill: parent
+                currentIndex: tabBar.currentIndex
 
               Item {
                 height: tabView.height
@@ -2387,6 +2443,19 @@ Item {
               }
             }
 
+              NIconButton {
+                visible: root.showPanelPreview && !root.panelPreviewItem && root.hasPlayback
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.rightMargin: -Math.round(baseSize * 0.35)
+                z: 2
+                icon: "chevron-left"
+                tooltipText: pluginApi?.tr("panel.showPreview")
+                baseSize: 26
+                onClicked: root.syncPanelPlaybackPreview(true)
+              }
+            }
+
             Item {
               visible: root.showPanelPreview && !!root.panelPreviewItem
               Layout.preferredWidth: Math.round(10 * Style.uiScaleRatio)
@@ -2426,12 +2495,15 @@ Item {
                                        return;
                                      }
                                      var currentX = splitterMouseArea.mapToItem(panelTabsRow, mouse.x, mouse.y).x;
-                                     root.previewPaneWidth = root.clampPreviewPaneWidth(dragStartWidth - (currentX - dragStartX));
+                                     root.persistPreviewPaneWidth(dragStartWidth - (currentX - dragStartX), false);
                                    }
+
+                onReleased: root.persistPreviewPaneWidth(root.previewPaneWidth, true)
               }
             }
 
             Rectangle {
+              id: previewPane
               visible: root.showPanelPreview && !!root.panelPreviewItem
               Layout.preferredWidth: root.previewPaneWidth > 0
                   ? root.previewPaneWidth
@@ -2443,6 +2515,9 @@ Item {
               border.width: 1
               border.color: Qt.alpha((Color.mOutline || Color.mOnSurfaceVariant || "#888888"), 0.24)
               clip: true
+              readonly property bool showPreviewPlaybackActions: !root.showPanelNowPlaying
+                  && root.hasPlayback
+                  && root.previewItemsEqual(root.panelPreviewItem, root.playbackPreviewEntry())
 
               ColumnLayout {
                 anchors.fill: parent
@@ -2460,7 +2535,7 @@ Item {
 
                   NIconButton {
                     icon: "x"
-                    tooltipText: pluginApi?.tr("panel.close")
+                    tooltipText: pluginApi?.tr("panel.hidePreview")
                     baseSize: 28
                     onClicked: root.clearPanelPreview()
                   }
@@ -2474,7 +2549,86 @@ Item {
                   showChips: false
                   showLengthDetails: false
                   showPlaybackProgress: !(root.showPanelNowPlaying && root.showPanelPlaybackProgress)
-                  showInlineSpeedControls: false
+                  showInlineSpeedControls: previewPane.showPreviewPlaybackActions
+                }
+
+                Flow {
+                  Layout.fillWidth: true
+                  visible: previewPane.showPreviewPlaybackActions
+                  width: parent.width
+                  spacing: Style.marginS
+
+                  NButton {
+                    text: mainInstance?.isPaused === true ? pluginApi?.tr("panel.resume") : pluginApi?.tr("panel.pause")
+                    icon: mainInstance?.isPaused === true ? "player-play-filled" : "player-pause-filled"
+                    fontSize: Style.fontSizeS
+                    enabled: mainInstance?.isPlaying === true
+                    onClicked: mainInstance?.togglePause()
+                  }
+
+                  NButton {
+                    text: pluginApi?.tr("panel.stop")
+                    icon: "player-stop-filled"
+                    fontSize: Style.fontSizeS
+                    enabled: root.hasPlayback
+                    onClicked: mainInstance?.stopPlayback()
+                  }
+                }
+
+                NText {
+                  id: previewPlaybackStatus
+                  Layout.fillWidth: true
+                  visible: previewPane.showPreviewPlaybackActions
+                      && mainInstance?.playbackStarting === true
+                      && text.length > 0
+                  text: (mainInstance?.playbackStartingMessage || "").trim()
+                  color: Color.mOnSurfaceVariant
+                  pointSize: Style.fontSizeS
+                  wrapMode: Text.NoWrap
+                  elide: Text.ElideRight
+                }
+
+                Flow {
+                  Layout.fillWidth: true
+                  visible: previewPane.showPreviewPlaybackActions
+                  width: parent.width
+                  spacing: Style.marginS
+
+                  NButton {
+                    text: pluginApi?.tr("panel.saveCurrent")
+                    icon: "bookmark-plus"
+                    fontSize: Style.fontSizeS
+                    enabled: root.hasPlayback && mainInstance?.findSavedEntry({
+                                                           "id": mainInstance?.currentEntryId || "",
+                                                           "url": mainInstance?.currentUrl || ""
+                                                         }) === null
+                    onClicked: mainInstance?.saveEntry({
+                                                         "id": mainInstance?.currentEntryId || "",
+                                                         "title": mainInstance?.currentTitle || "",
+                                                         "url": mainInstance?.currentUrl || "",
+                                                         "uploader": mainInstance?.currentUploader || "",
+                                                         "duration": mainInstance?.currentDuration || 0,
+                                                         "provider": mainInstance?.currentProvider || ""
+                                                       })
+                  }
+
+                  NButton {
+                    text: pluginApi?.tr("panel.saveCurrentMp3")
+                    icon: "download"
+                    fontSize: Style.fontSizeS
+                    enabled: root.hasPlayback && root.isRemoteEntry({
+                                                     "url": mainInstance?.currentUrl || "",
+                                                     "provider": mainInstance?.currentProvider || ""
+                                                   })
+                    onClicked: mainInstance?.downloadCurrentTrack()
+                  }
+
+                  NButton {
+                    text: pluginApi?.tr("panel.refresh")
+                    icon: "refresh"
+                    fontSize: Style.fontSizeS
+                    onClicked: mainInstance?.refreshStatus(true)
+                  }
                 }
               }
             }

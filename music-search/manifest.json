@@ -1,7 +1,7 @@
 {
   "id": "music-search",
   "name": "Music Search",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "minNoctaliaVersion": "4.6.6",
   "author": "kevichi7",
   "license": "MIT",
@@ -52,6 +52,7 @@
       "showPanelRecentTracks": true,
       "showPanelSearchHelper": true,
       "showPanelPreview": true,
+      "previewPaneWidth": 0,
       "showPanelUrlActions": true,
       "showPanelSpeedControls": true,
       "showPanelQueueControls": true,

@@ -255,6 +255,8 @@
     "openLauncher": "Launcher",
     "openSettings": "Settings",
     "close": "Close",
+    "hidePreview": "Hide preview",
+    "showPreview": "Show preview",
     "search": "Search",
     "library": "Saved",
     "queue": "Queue",

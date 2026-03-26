@@ -260,7 +260,7 @@ Item {
       return;
     }
 
-    if (!currentItem?.isPlaying) {
+    if (!isItemPlayingNow(currentItem)) {
       livePosition = 0;
     }
   }
@@ -527,7 +527,7 @@ Item {
 
       RowLayout {
         Layout.fillWidth: true
-        visible: (showUploaderMetadata && effectiveUploader() !== "") || currentItem?.isPlaying === true
+        visible: (showUploaderMetadata && effectiveUploader() !== "") || isItemPlayingNow(currentItem)
         spacing: Style.marginXS
 
         NText {
@@ -541,7 +541,7 @@ Item {
         }
 
         RowLayout {
-          visible: currentItem?.isPlaying === true && previewPanel.showInlineSpeedControls
+          visible: isItemPlayingNow(currentItem) && previewPanel.showInlineSpeedControls
           spacing: Math.max(2, Math.round(Style.marginXS * 0.5))
 
           NButton {
@@ -549,7 +549,7 @@ Item {
             backgroundColor: "transparent"
             textColor: Color.mOnSurfaceVariant
             outlined: false
-            enabled: currentItem?.isPlaying === true
+            enabled: isItemPlayingNow(currentItem)
             implicitWidth: Math.round(24 * Style.uiScaleRatio)
             implicitHeight: Math.round(24 * Style.uiScaleRatio)
             onClicked: detailCacheOwner?.mainInstance?.adjustSpeed(-0.05)
@@ -581,7 +581,7 @@ Item {
             backgroundColor: "transparent"
             textColor: Color.mOnSurfaceVariant
             outlined: false
-            enabled: currentItem?.isPlaying === true
+            enabled: isItemPlayingNow(currentItem)
             implicitWidth: Math.round(24 * Style.uiScaleRatio)
             implicitHeight: Math.round(24 * Style.uiScaleRatio)
             onClicked: detailCacheOwner?.mainInstance?.adjustSpeed(0.05)
@@ -593,7 +593,7 @@ Item {
         id: progressWrapper
         Layout.fillWidth: true
         Layout.preferredHeight: progressSlider.implicitHeight + progressTimes.implicitHeight + Style.marginXS
-        visible: previewPanel.showPlaybackProgress && currentItem?.isPlaying === true && effectiveDuration() > 0
+        visible: previewPanel.showPlaybackProgress && isItemPlayingNow(currentItem) && effectiveDuration() > 0
         property real localSeekRatio: -1
         property real lastSentSeekRatio: -1
         property real seekEpsilon: 0.01
@@ -638,7 +638,7 @@ Item {
           stepSize: 0
           snapAlways: false
           heightRatio: 0.4
-          enabled: currentItem?.isPlaying === true && effectiveDuration() > 0
+          enabled: isItemPlayingNow(currentItem) && effectiveDuration() > 0
           value: progressWrapper.progressRatio
 
           onMoved: {
