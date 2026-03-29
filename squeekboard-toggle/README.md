@@ -17,8 +17,11 @@ The plugin uses `gsettings` to read and write the GNOME accessibility setting `o
 
 - **Noctalia** ≥ 4.4.3
 - **Squeekboard** installed and running
-- **Niri** `switch-events` configured in `~/.config/niri/config.kdl`:
 
+## For 2in1 Laptops
+
+- **Niri** `switch-events` configured in `~/.config/niri/config.kdl`:
+  
 ```kdl
 switch-events {
     tablet-mode-on { spawn "bash" "-c" "gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled true"; }
