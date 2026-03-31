@@ -36,6 +36,7 @@ ColumnLayout {
     return !match || match.key === "99"
   }
   property string valueMethodCustomInput: valueMethodCustom     ? String(root.valueMethod)         : ""
+  property bool   valueTune:              cfg.tune              ?? defaults.tune              ?? false
   property int    valueTuneFajr:          cfg.tuneFajr          ?? defaults.tuneFajr          ?? 0
   property int    valueTuneDhuhr:         cfg.tuneDhuhr         ?? defaults.tuneDhuhr         ?? 0
   property int    valueTuneAsr:           cfg.tuneAsr           ?? defaults.tuneAsr           ?? 0
@@ -151,6 +152,13 @@ ColumnLayout {
     Layout.bottomMargin: -Style.marginM
   }
 
+  NToggle {
+    Layout.fillWidth: true
+    label: pluginApi?.tr("settings.tune.enable")
+    checked: root.valueTune
+    onToggled: checked => root.valueTune = checked
+  }
+
   Repeater {
     model: [
       { key: "Fajr",    labelKey: "settings.tune.fajr"    },
@@ -160,6 +168,7 @@ ColumnLayout {
       { key: "Isha",    labelKey: "settings.tune.isha"     }
     ]
     delegate: NTextInput {
+      visible: root.valueTune
       required property var modelData
       Layout.fillWidth: true
       label: pluginApi?.tr(modelData.labelKey)
@@ -428,6 +437,7 @@ ColumnLayout {
     pluginApi.pluginSettings.school            = root.valueSchool
     pluginApi.pluginSettings.hijriDayOffset    = root.valueHijriDayOffset
     pluginApi.pluginSettings.weekStartDay      = root.valueWeekStartDay
+    pluginApi.pluginSettings.tune              = root.valueTune
     pluginApi.pluginSettings.tuneFajr          = root.valueTuneFajr
     pluginApi.pluginSettings.tuneDhuhr         = root.valueTuneDhuhr
     pluginApi.pluginSettings.tuneAsr           = root.valueTuneAsr

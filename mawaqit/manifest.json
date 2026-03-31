@@ -32,6 +32,7 @@
       "playAzan": false,
       "azanFile": "azan1.mp3",
       "hijriDayOffset": 0,
+      "tune": false,
       "tuneFajr": 0,
       "tuneDhuhr": 0,
       "tuneAsr": 0,

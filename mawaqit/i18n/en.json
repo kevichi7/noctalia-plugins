@@ -109,6 +109,7 @@
     "tune": {
       "header": "Prayer Time Offsets",
       "desc": "Minute adjustments applied per prayer (negative = earlier, positive = later).",
+      "enable": "Enable",
       "fajr": "Fajr offset (min)",
       "dhuhr": "Dhuhr offset (min)",
       "asr": "Asr offset (min)",
